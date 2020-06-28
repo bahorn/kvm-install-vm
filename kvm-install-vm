@@ -71,6 +71,7 @@ function usage_subcommand ()
             printf "DISTRIBUTIONS\n"
             printf "    NAME            DESCRIPTION                         LOGIN\n"
             printf "    amazon2         Amazon Linux 2                      ec2-user\n"
+            printf "    archlinux       ArchLinux Rolling Release           arch\n"
             printf "    centos8         CentOS 8                            centos\n"
             printf "    centos7         CentOS 7                            centos\n"
             printf "    centos7-atomic  CentOS 7 Atomic Host                centos\n"
@@ -428,6 +429,14 @@ function fetch_images ()
             DISK_FORMAT=qcow2
             LOGIN_USER=opensuse
             ;;
+        archlinux)
+            QCOW=arch-openstack-LATEST-image-bootstrap.qcow2
+            OS_TYPE="linux"
+            OS_VARIANT="archlinux"
+            IMAGE_URL=https://linuximages.de/openstack/arch
+            DISK_FORMAT=qcow2
+            LOGIN_USER=arch
+            ;;
         *)
             die "${DISTRO} not a supported OS.  Run 'kvm-install-vm create help'."
             ;;
@@ -508,7 +517,7 @@ function storpool_exists ()
 function set_sudo_group ()
 {
     case "${DISTRO}" in
-        centos?|fedora??|*-atomic|amazon?|opensuse* )
+        centos?|fedora??|*-atomic|amazon?|opensuse*|archlinux )
             SUDOGROUP="wheel"
             ;;
         ubuntu*|debian* )
@@ -526,7 +535,7 @@ function set_cloud_init_remove ()
         centos6 )
             CLOUDINITDISABLE="chkconfig cloud-init off"
             ;;
-        centos8|centos7|amazon?|fedora??|ubuntu*|debian*|opensuse* )
+        centos8|centos7|amazon?|fedora??|ubuntu*|debian*|opensuse*|archlinux )
             CLOUDINITDISABLE="systemctl disable cloud-init.service"
             ;;
         *-atomic)
@@ -540,6 +549,7 @@ function set_network_restart_cmd ()
     case "${DISTRO}" in
         centos6 )           NETRESTART="service network stop && service network start" ;;
         ubuntu*|debian*)    NETRESTART="systemctl stop networking && systemctl start networking" ;;
+        archlinux)          NETRESTART="reboot" ;;
         *)                  NETRESTART="systemctl stop network && systemctl start network" ;;
     esac
 }
@@ -576,8 +586,6 @@ Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 MIME-Version: 1.0
 --==BOUNDARY==
 Content-Type: text/cloud-config; charset="us-ascii"
-
-#cloud-config
 
 # Hostname management
 preserve_hostname: False
